@@ -1,49 +1,68 @@
 const fs = require("fs-extra");
 const { createCanvas, loadImage } = require("canvas");
+const axios = require("axios");
 
 module.exports = {
   config: {
     name: "kiss",
-    version: "1.0.11",
+    version: "1.0.13",
     author: "Rakib Adil",
     countDown: 5,
     role: 0,
     longDescription: "{p}kiss @mention or reply someone you want to kiss that person 😚",
     category: "funny",
     guide: "{p}kiss and mention someone you want to kiss 🥴",
-	 usePrefix : true,//you can use this cmd to no prefix, just set the true to false.
-	 premium: false,
-    notes : " If you change the author then the command will not work and not usable"
+    usePrefix: true,
+    premium: false,
+    notes: "If you change the author then the command will not work and not usable"
   },
 
-  onStart: async function ({ api, message, event, usersData }) {
-	const owner = module.exports.config;
-	const eAuth = "UmFraWIgQWRpbA==";
-	const dAuth = Buffer.from(eAuth, "base64").toString("utf8");
-		if(owner.author !== dAuth) return message.reply("you've changed the author name, please set it to default(Rakib Adil) otherwise this command will not work.🙂");
+  onStart: async function ({ api, message, event }) {
+    const owner = module.exports.config;
+    const eAuth = "UmFraWIgQWRpbA==";
+    const dAuth = Buffer.from(eAuth, "base64").toString("utf8");
 
-    let one = event.senderID, two;
-    const mention = Object.keys(event.mentions);
-    if(mention.length > 0){
-        two = mention[0];
-    }else if(event.type === "message_reply"){
-        two = event.messageReply.senderID;
-    }else{
-        message.reply("please mention or reply someone message to kiss him/her 🌚")
-    };
+    if (owner.author !== dAuth)
+      return message.reply(
+        "you've changed the author name, please set it to default (Rakib Adil) otherwise this command will not work.🙂"
+      );
+
+    const one = event.senderID;
+
+    let two;
+    if (event.mentions && Object.keys(event.mentions).length > 0) {
+      two = Object.keys(event.mentions)[0];
+    } else {
+      return message.reply(
+        "please mention or reply someone message to kiss him/her 🌚"
+      );
+    }
 
     try {
-      const avatarURL1 = await usersData.getAvatarUrl(one);
-      const avatarURL2 = await usersData.getAvatarUrl(two);
+      const avatar1Data = (
+        await axios.get(
+          `https://graph.facebook.com/${one}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+          { responseType: "arraybuffer" }
+        )
+      ).data;
+
+      const avatar2Data = (
+        await axios.get(
+          `https://graph.facebook.com/${two}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+          { responseType: "arraybuffer" }
+        )
+      ).data;
+
+      const avatar1 = await loadImage(avatar1Data);
+      const avatar2 = await loadImage(avatar2Data);
 
       const canvas = createCanvas(950, 850);
       const ctx = canvas.getContext("2d");
 
-      const background = await loadImage("https://files.catbox.moe/6qg782.jpg");
+      const background = await loadImage(
+        "https://files.catbox.moe/6qg782.jpg"
+      );
       ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-      const avatar1 = await loadImage(avatarURL1);
-      const avatar2 = await loadImage(avatarURL2);
 
       ctx.save();
       ctx.beginPath();
@@ -62,17 +81,18 @@ module.exports = {
       ctx.restore();
 
       const outputPath = `${__dirname}/tmp/kiss_image.png`;
-      const buffer = canvas.toBuffer("image/png");
+      fs.writeFileSync(outputPath, canvas.toBuffer("image/png"));
 
-      fs.writeFileSync(outputPath, buffer);
-
-      message.reply({
-        body: "Ummmmaaaaahhh! 😽😘",
-        attachment: fs.createReadStream(outputPath)
-      }, () => fs.unlinkSync(outputPath));
+      message.reply(
+        {
+          body: "Ummmmaaaaahhh! 😽😘",
+          attachment: fs.createReadStream(outputPath)
+        },
+        () => fs.unlinkSync(outputPath)
+      );
     } catch (error) {
-      console.error(error.message);
-      message.reply("an error occurred, please try again later.🐸")
+      console.error(error);
+      message.reply("an error occurred, please try again later.🐸");
     }
   }
 };

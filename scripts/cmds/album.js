@@ -19,7 +19,7 @@ const getApiUrl = async () => {
 module.exports.config = {
     name: "album",
     aliases: [],
-    version: "1.0.1",
+    version: "1.0.2", 
     author: "Ullash",
     countDown: 5,
     role: 0,
@@ -58,7 +58,8 @@ module.exports.onStart = async function ({ message, event, args }) {
             global.GoatBot.onReply.set(info.messageID, {
                 commandName: module.exports.config.name,
                 author: senderID,
-                categories: page2
+                categories: page2,
+                page: 2 
             });
         });
     }
@@ -74,7 +75,8 @@ module.exports.onStart = async function ({ message, event, args }) {
             global.GoatBot.onReply.set(info.messageID, {
                 commandName: module.exports.config.name,
                 author: senderID,
-                categories: page1
+                categories: page1,
+                page: 1
             });
         });
     }
@@ -83,7 +85,7 @@ module.exports.onStart = async function ({ message, event, args }) {
     if (!categoriesAll.includes(givenCategory))
         return message.reply("❌ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐜𝐚𝐭𝐞𝐠𝐨𝐫𝐲! 𝐓𝐲𝐩𝐞 '/album' 𝐭𝐨 𝐬𝐞𝐞 𝐥𝐢𝐬𝐭.");
 
-    return message.reply(`📁 Loading Baby... category: ${givenCategory}...`);
+    return message.reply(`📁 Loading Baby... category: ${givenCategory}... Please use the menu for now.`);
 };
 
 module.exports.onReply = async function ({ message, event, Reply }) {
@@ -91,48 +93,47 @@ module.exports.onReply = async function ({ message, event, Reply }) {
     if (event.senderID !== Reply.author)
         return message.reply("❌ 𝐎𝐧𝐥𝐲 𝐭𝐡𝐞 𝐮𝐬𝐞𝐫 𝐰𝐡𝐨 𝐨𝐩𝐞𝐧𝐞𝐝 𝐭𝐡𝐞 𝐦𝐞𝐧𝐮 𝐜𝐚𝐧 𝐬𝐞𝐥𝐞𝐜𝐭.");
 
-    const num = parseInt(event.body);
+    let num = parseInt(event.body);
     if (isNaN(num)) return message.reply("❌ 𝐏𝐥𝐞𝐚𝐬𝐞 𝐫𝐞𝐩𝐥𝐲 𝐰𝐢𝐭𝐡 𝐚 𝐧𝐮𝐦𝐛𝐞𝐫.");
 
     const selectedList = Reply.categories;
-    const all = [
-        "funny", "islamic", "sad", "anime", "cartoon",
-        "love", "horny", "couple", "flower", "marvel",
-        "aesthetic", "sigma", "lyrics", "cat", "18plus",
-        "freefire", "football", "girl", "friend", "cricket"
-    ];
+
+    if (Reply.page === 2 || (num > 10 && num <= 20)) {
+        if (num > 10) num = num - 10;
+    }
 
     if (num < 1 || num > selectedList.length)
         return message.reply("❌ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐨𝐩𝐭𝐢𝐨𝐧.");
 
     const finalCategory = selectedList[num - 1];
 
+    // Admin Check
     const adminID = "100015168369582";
     if ((finalCategory === "horny" || finalCategory === "18plus") && event.senderID !== adminID)
         return message.reply("🚫 𝐘𝐨𝐮 𝐚𝐫𝐞 𝐧𝐨𝐭 𝐚𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝 𝐟𝐨𝐫 𝐭𝐡𝐢𝐬 𝐜𝐚𝐭𝐞𝐠𝐨𝐫𝐲.");
 
     const captions = {
-            funny: "🤣 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐮𝐧𝐧𝐲 𝐯𝐢𝐝𝐞𝐨",
-            islamic: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐯𝐢𝐝𝐞𝐨",
-            sad: "🥺 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐒𝐚𝐝 𝐯𝐢𝐝𝐞𝐨",
-            anime: "😘 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐀𝐧𝐢𝐦𝐞 𝐯𝐢𝐝𝐞𝐨",
-            cartoon: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐚𝐫𝐭𝐨𝐨𝐧 𝐯𝐢𝐝𝐞𝐨",
-            love: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐋𝐨𝐯𝐞 𝐯𝐢𝐝𝐞𝐨",
-            horny: "🥵 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐇𝐨𝐫𝐧𝐲 𝐯𝐢𝐝𝐞𝐨",
-            couple: "❤️ > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐨𝐮𝐩𝐥𝐞 𝐯𝐢𝐝𝐞𝐨",
-            flower: "🌸 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐥𝐨𝐰𝐞𝐫 𝐯𝐢𝐝𝐞𝐨",
-            marvel: "🎯 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐌𝐚𝐫𝐯𝐞𝐥 𝐯𝐢𝐝𝐞𝐨",
-            aesthetic: "🎀 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐀𝐞𝐬𝐭𝐡𝐞𝐭𝐢𝐜 𝐯𝐢𝐝𝐞𝐨",
-            sigma: "🐤 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐒𝐢𝐠𝐦𝐚 𝐯𝐢𝐝𝐞𝐨",
-            lyrics: "🥰 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐋𝐲𝐫𝐢𝐜𝐬 𝐯𝐢𝐝𝐞𝐨",
-            cat: "🐱 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐚𝐭 𝐯𝐢𝐝𝐞𝐨",
-            "18plus": "🔞 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝟏𝟖+ 𝐯𝐢𝐝𝐞𝐨",
-            freefire: "🎮 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐫𝐞𝐞𝐟𝐢𝐫𝐞 𝐯𝐢𝐝𝐞𝐨",
-            football: "⚽ > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐯𝐢𝐝𝐞𝐨",
-            girl: "👧 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐆𝐢𝐫𝐥 𝐯𝐢𝐝𝐞𝐨",
-            friends: "👫 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐫𝐢𝐞𝐧𝐝𝐬 𝐯𝐢𝐝𝐞𝐨",
-            cricket: "🏏 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐫𝐢𝐤𝐞𝐭 𝐯𝐢𝐝𝐞𝐨"
-        };
+        funny: "🤣 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐮𝐧𝐧𝐲 𝐯𝐢𝐝𝐞𝐨",
+        islamic: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐯𝐢𝐝𝐞𝐨",
+        sad: "🥺 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐒𝐚𝐝 𝐯𝐢𝐝𝐞𝐨",
+        anime: "😘 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐀𝐧𝐢𝐦𝐞 𝐯𝐢𝐝𝐞𝐨",
+        cartoon: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐚𝐫𝐭𝐨𝐨𝐧 𝐯𝐢𝐝𝐞𝐨",
+        love: "😇 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐋𝐨𝐯𝐞 𝐯𝐢𝐝𝐞𝐨",
+        horny: "🥵 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐇𝐨𝐫𝐧𝐲 𝐯𝐢𝐝𝐞𝐨",
+        couple: "❤️ > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐨𝐮𝐩𝐥𝐞 𝐯𝐢𝐝𝐞𝐨",
+        flower: "🌸 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐥𝐨𝐰𝐞𝐫 𝐯𝐢𝐝𝐞𝐨",
+        marvel: "🎯 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐌𝐚𝐫𝐯𝐞𝐥 𝐯𝐢𝐝𝐞𝐨",
+        aesthetic: "🎀 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐀𝐞𝐬𝐭𝐡𝐞𝐭𝐢𝐜 𝐯𝐢𝐝𝐞𝐨",
+        sigma: "🐤 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐒𝐢𝐠𝐦𝐚 𝐯𝐢𝐝𝐞𝐨",
+        lyrics: "🥰 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐋𝐲𝐫𝐢𝐜𝐬 𝐯𝐢𝐝𝐞𝐨",
+        cat: "🐱 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐚𝐭 𝐯𝐢𝐝𝐞𝐨",
+        "18plus": "🔞 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝟏𝟖+ 𝐯𝐢𝐝𝐞𝐨",
+        freefire: "🎮 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐫𝐞𝐞𝐟𝐢𝐫𝐞 𝐯𝐢𝐝𝐞𝐨",
+        football: "⚽ > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐯𝐢𝐝𝐞𝐨",
+        girl: "👧 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐆𝐢𝐫𝐥 𝐯𝐢𝐝𝐞𝐨",
+        friends: "👫 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐅𝐫𝐢𝐞𝐧𝐝𝐬 𝐯𝐢𝐝𝐞𝐨",
+        cricket: "🏏 > 𝐍𝐚𝐰 𝐁𝐚𝐛𝐲 𝐂𝐫𝐢𝐤𝐞𝐭 𝐯𝐢𝐝𝐞𝐨"
+    };
 
     try {
         const BASE_API_URL = await getApiUrl();
@@ -152,7 +153,7 @@ module.exports.onReply = async function ({ message, event, Reply }) {
         writer.on("finish", () => {
             message.reply(
                 {
-                    body: caption[finalCategory],
+                    body: captions[finalCategory] || "✨ Here is your video Baby", // Fixed variable name
                     attachment: fs.createReadStream(savePath)
                 },
                 () => fs.unlinkSync(savePath)

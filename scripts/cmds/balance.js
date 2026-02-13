@@ -1,6 +1,3 @@
-const axios = require("axios");
-const API_BASE = "https://bank-game-api.cyberbot.top";
-
 module.exports = {
   config: {
     name: "balance",
@@ -72,8 +69,8 @@ module.exports = {
         const ids = Object.keys(mentions);
 
         for (const uid of ids) {
-          const apiRes = await axios.get(`${API_BASE}/users/${uid}`);
-          const money = apiRes.data.money || 0;
+          const userData = await usersData.get(uid);
+          const money = userData.money || 0;
 
           const nameRaw = await getDisplayName(uid, mentions[uid]?.replace(/@/g, ""));
           const boldName = /^[A-Za-z0-9\s]+$/.test(nameRaw) ? formatBold(nameRaw) : nameRaw;
@@ -88,8 +85,8 @@ module.exports = {
         return message.reply(msg.trim());
       }
 
-      const resUser = await axios.get(`${API_BASE}/users/${senderID}`);
-      const money = resUser.data.money || 0;
+      const userData = await usersData.get(senderID);
+      const money = userData.money || 0;
 
       const nameRaw = await getDisplayName(senderID);
       const boldName = /^[A-Za-z0-9\s]+$/.test(nameRaw) ? formatBold(nameRaw) : nameRaw;
@@ -104,7 +101,7 @@ module.exports = {
 
     } catch (err) {
       console.error(err);
-      return message.reply("⚠️ ব্যালেন্স দেখতে সমস্যা হচ্ছে (API error).");
+      return message.reply("⚠️ (system error).");
     }
   }
 };

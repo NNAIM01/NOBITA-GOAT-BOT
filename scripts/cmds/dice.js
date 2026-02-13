@@ -1,6 +1,3 @@
-const axios = require("axios");
-const API_BASE = "https://bank-game-api.cyberbot.top";
-
 module.exports = {
   config: {
     name: "dice",
@@ -17,7 +14,7 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ args, message, event }) {
+  onStart: async function ({ args, message, event, usersData }) {
     const { senderID } = event;
     const bet = parseInt(args[0]);
 
@@ -29,8 +26,8 @@ module.exports = {
     }
 
     try {
-      const resUser = await axios.get(`${API_BASE}/users/${senderID}`);
-      const money = resUser.data?.money || 0;
+      const userData = await usersData.get(senderID);
+      const money = userData.money || 0;
 
       if (money < bet) {
         return message.reply("❌ You don't have enough balance to bet!");
@@ -48,10 +45,10 @@ module.exports = {
       const r = Math.random();
       let outcome;
 
-      if (r < 0.40) outcome = "lose";            
-      else if (r < 0.85) outcome = "win";       
-      else if (r < 0.95) outcome = "draw";  
-      else outcome = "jackpot";       
+      if (r < 0.40) outcome = "lose";
+      else if (r < 0.85) outcome = "win";
+      else if (r < 0.95) outcome = "draw";
+      else outcome = "jackpot";
 
       let userRoll, botRoll;
       let delta = 0;
@@ -100,15 +97,18 @@ module.exports = {
           `❌ 𝗬𝗼𝘂 𝗟𝗼𝘀𝘁 -${bet}$`;
       }
 
+      // 💰 Update money (normal usersData system)
       if (delta !== 0) {
-        await axios.post(`${API_BASE}/users/${senderID}/balance/delta`, { delta });
+        await usersData.set(senderID, {
+          money: money + delta
+        });
       }
 
       return message.reply(result);
 
     } catch (err) {
       console.error(err);
-      return message.reply("⚠️ Dice game এ সমস্যা হচ্ছে (API error).");
+      return message.reply("⚠️ Dice game এ সমস্যা হচ্ছে (system error).");
     }
   }
 };

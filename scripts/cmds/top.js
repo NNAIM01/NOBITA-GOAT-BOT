@@ -1,6 +1,3 @@
-const axios = require("axios");
-const API_BASE = "https://bank-game-api.cyberbot.top";
-
 function formatBold(text) {
   const boldMap = {
     A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',K:'𝗞',L:'𝗟',M:'𝗠',
@@ -9,14 +6,14 @@ function formatBold(text) {
     n:'𝗻',o:'𝗼',p:'𝗽',q:'𝗾',r:'𝗿',s:'𝘀',t:'𝘁',u:'𝘂',v:'𝘃',w:'𝘄',x:'𝘅',y:'𝘆',z:'𝘇',
     0:'𝟬',1:'𝟭',2:'𝟮',3:'𝟯',4:'𝟰',5:'𝟱',6:'𝟲',7:'𝟳',8:'𝟴',9:'𝟵',
   };
-  return text.split("").map(c => boldMap[c] || c).join("");
+  return String(text).split("").map(c => boldMap[c] || c).join("");
 }
 
 function formatMoney(amount) {
   if (amount === undefined || amount === null) return "0";
   const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "De"];
   let tier = 0;
-  let num = amount;
+  let num = Number(amount);
   while (num >= 1000 && tier < suffixes.length - 1) {
     num /= 1000;
     tier++;
@@ -32,66 +29,49 @@ module.exports = {
     author: "MAHBUB ULLASH",
     countDown: 5,
     role: 0,
-    shortDescription: "Show top 15 richest users (API)",
-    longDescription: "Show top 15 richest users from external API server",
+    shortDescription: "Show top 15 richest users",
+    longDescription: "Show top 15 richest users from local database",
     category: "economy",
     guide: "{p}top"
   },
 
   onStart: async function ({ message, usersData }) {
     try {
-      const res = await axios.get(`${API_BASE}/leaderboard`, {
-        params: { limit: 15 }
-      });
+      const allUsers = await usersData.getAll();
 
-      let all = res.data;
-
-      if (!all || all.length === 0) {
+      if (!allUsers || allUsers.length === 0) {
         return message.reply("📛 এখনো কোনো ইউজারের ব্যালেন্স নেই!");
       }
 
-      all.sort((a, b) => (b.money || 0) - (a.money || 0));
+      allUsers.sort((a, b) => (b.money || 0) - (a.money || 0));
 
       let msg = "💸 𝗧𝗼𝗽 𝟭𝟱 𝗥𝗶𝗰𝗵𝗲𝘀𝘁 𝗨𝘀𝗲𝗿𝘀 💸\n";
       msg += "━━━━━━━━━━━━━━━\n";
 
       let count = 0;
-      for (const user of all) {
+      for (const user of allUsers) {
         if (count >= 15) break;
 
-        const uid = user.uid;
+        const uid = user.userID;
         let name = user.name || "Unknown";
-
-        if (!name || name === "Unknown") {
-          try {
-            const localUserData = await usersData.get(uid);
-            if (localUserData && localUserData.name) {
-              name = localUserData.name;
-
-              axios.post(`${API_BASE}/users/${uid}/name`, {
-                name
-              }).catch(() => {});
-            }
-          } catch (e) {
-          }
-        }
 
         if (!name) name = "Unknown";
 
         let boldName = /^[A-Za-z0-9\s]+$/.test(name) ? formatBold(name) : name;
 
         const moneyVal = user.money || 0;
-        const moneyFormatted = formatMoney(moneyVal);  
-        const boldMoney = formatBold(moneyFormatted + " $"); 
+        const moneyFormatted = formatMoney(moneyVal);
+        const boldMoney = formatBold(moneyFormatted + " $");
 
         msg += `${count + 1}. ${boldName} — ${boldMoney}\n`;
         count++;
       }
 
       return message.reply(msg);
+
     } catch (err) {
       console.error(err);
-      return message.reply("⚠️ টপ লিস্ট লোড করতে সমস্যা হচ্ছে (API error).");
+      return message.reply("⚠️ টপ লিস্ট লোড করতে সমস্যা হচ্ছে (system error).");
     }
   }
 };

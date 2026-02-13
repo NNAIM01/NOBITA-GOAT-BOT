@@ -1,6 +1,3 @@
-const axios = require("axios");
-const API_BASE = "https://bank-game-api.cyberbot.top";
-
 module.exports = {
   config: {
     name: "slot",
@@ -8,7 +5,7 @@ module.exports = {
     author: "MAHBUB ULLASH",
     description: {
       role: 0,
-      en: "Classic Slot Machine Game with API"
+      en: "Classic Slot Machine Game (Normal System)"
     },
     category: "game"
   },
@@ -26,7 +23,7 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ args, message, event, getLang, api }) {
+  onStart: async function ({ args, message, event, getLang, usersData, api }) {
     const { senderID } = event;
     const bet = parseInt(args[0]);
 
@@ -37,95 +34,78 @@ module.exports = {
       return message.reply(getLang("min_bet", 50));
     }
 
-    try {
-      const resUser = await axios.get(`${API_BASE}/users/${senderID}`);
-      const money = resUser.data.money || 0;
+    const userData = await usersData.get(senderID);
+    const money = userData.money || 0;
 
-      if (bet > money) {
-        return message.reply(getLang("not_enough_money"));
-      }
-
-      const { slots, winnings, outcome, matchedCount } = generateSlotOutcome(bet);
-
-      await axios.post(`${API_BASE}/users/${senderID}/balance/delta`, {
-        delta: winnings
-      });
-
-      const absWin = Math.abs(Math.round(winnings));
-
-      const spinLine = `${slots[0]} | ${slots[1]} | ${slots[2]} | ${slots[3]}`;
-
-      let result = `🎰 𝗦𝗟𝗢𝗧 𝗠𝗔𝗖𝗛𝗜𝗡𝗘 🎰\n`;
-      result += `━━━━━━━━━━━━━━━\n`;
-      result += `${spinLine}\n`;
-      result += `━━━━━━━━━━━━━━━\n`;
-      result += `🎯 Bet: ${bet}$\n`;
-
-      if (winnings > 0) {
-        if (outcome === "jackpot") {
-          result += `🥇 𝗝𝗔𝗖𝗞𝗣𝗢𝗧! All 4 matched!\n💰 You won: ${absWin}$`;
-        } else if (matchedCount === 3) {
-          result += `✅ Three symbols matched!\n💰 You won: ${absWin}$`;
-        } else {
-          result += `✅ Two symbols matched!\n💰 You won: ${absWin}$`;
-        }
-      } else {
-        result += `❌ No match!\n💸 You lost: ${absWin}$`;
-      }
-
-
-      const s1 = slots[0];
-      const s2 = slots[1];
-      const s3 = slots[2];
-      const s4 = slots[3];
-
-      const frames = [
-        `🔲⏳🔲⏳`,      
-        `${s1} ⏳🔲⏳`,         
-        `${s1}${s2} 🔲⏳`,  
-        `${s1}${s2}${s3} 🔲⏳` 
-      ];
-
-      const sent = await message.reply(frames[0]);
-      const msgID = sent.messageID;
-
-      setTimeout(() => {
-        api.editMessage(frames[1], msgID, (err) => {
-          if (err) console.error("Edit frame 2 error:", err);
-        });
-      }, 500);
-
-      setTimeout(() => {
-        api.editMessage(frames[2], msgID, (err) => {
-          if (err) console.error("Edit frame 3 error:", err);
-        });
-      }, 1000);
-
-      setTimeout(() => {
-        api.editMessage(frames[3], msgID, (err) => {
-          if (err) console.error("Edit frame 4 error:", err);
-        });
-      }, 1500);
-
-      setTimeout(() => {
-        api.editMessage(result, msgID, (err) => {
-          if (err) {
-            console.error("Edit final result error:", err);
-            message.reply(result);
-          }
-        });
-      }, 2000);
-
-    } catch (err) {
-      console.error(err);
-      return message.reply("⚠️ Slot game এ সমস্যা হচ্ছে (API error).");
+    if (bet > money) {
+      return message.reply(getLang("not_enough_money"));
     }
+
+    const { slots, winnings, outcome, matchedCount } = generateSlotOutcome(bet);
+
+    await usersData.set(senderID, {
+      money: money + winnings
+    });
+
+    const absWin = Math.abs(Math.round(winnings));
+    const spinLine = `${slots[0]} | ${slots[1]} | ${slots[2]} | ${slots[3]}`;
+
+    let result = `🎰 𝗦𝗟𝗢𝗧 𝗠𝗔𝗖𝗛𝗜𝗡𝗘 🎰\n`;
+    result += `━━━━━━━━━━━━━━━\n`;
+    result += `${spinLine}\n`;
+    result += `━━━━━━━━━━━━━━━\n`;
+    result += `🎯 Bet: ${bet}$\n`;
+
+    if (winnings > 0) {
+      if (outcome === "jackpot") {
+        result += `🥇 𝗝𝗔𝗖𝗞𝗣𝗢𝗧! All 4 matched!\n💰 You won: ${absWin}$`;
+      } else if (matchedCount === 3) {
+        result += `✅ Three symbols matched!\n💰 You won: ${absWin}$`;
+      } else {
+        result += `✅ Two symbols matched!\n💰 You won: ${absWin}$`;
+      }
+    } else {
+      result += `❌ No match!\n💸 You lost: ${absWin}$`;
+    }
+
+    const s1 = slots[0];
+    const s2 = slots[1];
+    const s3 = slots[2];
+    const s4 = slots[3];
+
+    const frames = [
+      `🔲⏳🔲⏳`,
+      `${s1} ⏳🔲⏳`,
+      `${s1}${s2} 🔲⏳`,
+      `${s1}${s2}${s3} 🔲⏳`
+    ];
+
+    const sent = await message.reply(frames[0]);
+    const msgID = sent.messageID;
+
+    setTimeout(() => {
+      api.editMessage(frames[1], msgID, () => {});
+    }, 500);
+
+    setTimeout(() => {
+      api.editMessage(frames[2], msgID, () => {});
+    }, 1000);
+
+    setTimeout(() => {
+      api.editMessage(frames[3], msgID, () => {});
+    }, 1500);
+
+    setTimeout(() => {
+      api.editMessage(result, msgID, (err) => {
+        if (err) message.reply(result);
+      });
+    }, 2000);
   }
 };
 
 
 
-const symbols = ["🍇", "🍉", "🍊", "🍏", "🍓", "🍒", "🍌", "🥝", "🥑", "🌽", "7⃣", "🫦", "☢️", "✨", "🦋"];
+const symbols = ["🍇", "🍉", "🍊", "🍏", "🍓", "🤫", "🍒", "🍌", "🥝", "👅", "🥑", "🌽", "7⃣", "🫦", "☢️", "✨", "🦋"];
 
 const PROB = {
   lose: 27.8,
