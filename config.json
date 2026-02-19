@@ -155,7 +155,7 @@
     },
     "reactByRemove": {
       "enable": true,
-      "emoji": "⚠️"
+      "emoji": "☠️"
     },
     "onlyAdminBot": true
   },
